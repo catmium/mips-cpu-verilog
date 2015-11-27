@@ -1,0 +1,22 @@
+MIPS VERILOG MODULES
+
+- instruction_memory	(x)
+
+- pc_counter
+- control_unit	(Jet)
+- register
+- register_memory
+- sign_extended
+- alu_control	(Sarun)
+- data_mem
+- cpu (top_module)
+
+- mux	(x)
+- and	(x)
+- alu	(x)
+
+- half_adder	(x)
+- full_adder	(x)
+
+
+
