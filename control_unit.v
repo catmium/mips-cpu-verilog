@@ -1,12 +1,11 @@
 module control_unit (
-					input 	op [5:0],
-					output	reg regdst, regwrite,
-					output 	reg branch,
-					output	reg jump,
-					output	reg memread, memtoreg, memwrite,
-					output	reg [1:0] aluop,
-					output	reg aluscr, 
-					);
+	input 	op [5:0],
+	output	reg regdst, regwrite,
+	output 	reg branch,
+	output	reg jump,
+	output	reg memread, memtoreg, memwrite,
+	output	reg [1:0] aluop,
+	output	reg aluscr );
 
 	always @(*) begin
 		// default 
