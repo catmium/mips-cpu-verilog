@@ -1,28 +1,29 @@
-module alu_control(
-		input wire [5:0] funct,
-		input wire [1:0] aluop,
-		output reg [2:0] aluctl);
+module alu_control(ALUOp,funct,ALUCon);
+ input [1:0] ALUOp;
+ input [5:0] funct;
+ output [3:0] ALUCon;
 
-	reg [2:0] _funct;
-
-	always @(*) begin
-		case(funct[3:0])
-			4'b0000:  _funct = 2'b010;	
-			4'b0010:  _funct = 2'b110;	
-			4'b0100:  _funct = 2'b000;	
-			4'b0101:  _funct = 2'b001;	
-			4'b1010:  _funct = 2'b111;	
-			default: _funct = 2'b0;
-		endcase
-	end
+reg [3:0] ALUCon;
 
 	always @(*) begin
-		case(aluop)
-			2'b00: aluctl = 2'b010;
-			2'b01: aluctl = 2'b110;	
-			2'b10: aluctl = _funct;
-			2'b11: aluctl = 2'b110;	
-			default: aluctl = 0;
+		case(ALUOp)
+			2'b00: ALUCon <= 4'b0010;	
+			2'b01: ALUCon <= 4'b0110;	
+			2'b10: begin  
+                      if(funct == 6'b100000)
+                        ALUCon <= 4'b0010;	
+                      else if(funct == 6'b100010)
+                        ALUCon <= 4'b0110;	
+                      else if(funct == 6'b100101)
+                        ALUCon <= 4'b0001;	
+                      else if(funct == 6'b100100)
+                        ALUCon <= 4'b0000; 	
+                      else if(funct == 6'b101010)
+                        ALUCon <= 4'b0111; 
+                      else
+                        ALUCon <= 4'b0000;
+                    end
+			default: ALUCon <= 4'b0000;
 		endcase
 	end
 
