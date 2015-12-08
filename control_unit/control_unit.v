@@ -1,5 +1,5 @@
 module control_unit (
-	input 	op [5:0],
+	input[5:0] 	op,
 	output	reg regdst, regwrite,
 	output 	reg branch,
 	output	reg jump,
@@ -8,7 +8,7 @@ module control_unit (
 	output	reg aluscr );
 
 	always @(*) begin
-		// default 
+		// default
 		// R-type
 		branch 		<= 1'b0;
 		jump 		<= 1'b0;
@@ -28,14 +28,14 @@ module control_unit (
 				aluop[1:0]	<= 2'b00;
 				aluscr		<= 1'b1;
 			end
-			6'b10_0011: begin // sw
+			6'b10_1011: begin // sw
 				regwrite	<= 1'b0;
 				aluop[1:0]	<= 2'b00;
 				aluscr		<= 1'b1;
 				memwrite 	<= 1'b1;
 				regwrite	<= 1'b0;
 			end
-			6'b10_0011: begin // branch
+			6'b00_0100: begin // beq
 				branch		<= 1'b1;
 				aluop[1:0]	<= 2'b01;
 				regwrite	<= 1'b0;
@@ -43,7 +43,7 @@ module control_unit (
 			6'b00_1000: begin // addi
 				regdst   	<= 1'b0;
 				aluop[1] 	<= 1'b0;
-				alusrc   	<= 1'b1;
+				aluscr   	<= 1'b1;
 			end
 			6'b00_0000: begin // add
 			end
