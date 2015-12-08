@@ -1,11 +1,10 @@
 // Code your testbench here
 // or browse Examples
-
 module tb_cpu;
   //input clk, rst;
-  reg [31:0] addr;
+  //reg [31:0] addr;
   //reg [31:0] b_addr;
-  wire [31:0] out;
+  //wire [31:0] out;
 
   	wire[31:0] instruction;
     wire cu_regdst, cu_jump, cu_branch, cu_memread, cu_memtoreg;
