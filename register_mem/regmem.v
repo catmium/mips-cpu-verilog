@@ -6,7 +6,7 @@ module registerMemory (
 	input regwrite_con, 			//register wirte from control unit
 	input[31:0]write_data,
 	output reg[31:0] data1,
-	output reg[31:0] data2,
+	output reg[31:0] data2
 	);
 
  	reg[31:0]reg_mem[31:0];
