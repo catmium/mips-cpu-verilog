@@ -11,7 +11,7 @@ module tb_control_unit;
 
   initial
     begin
-      op <= 5'b00000;
+      op = 6'b100011;
       $dumpfile("dump.vcd");
       $dumpvars(1);
     end

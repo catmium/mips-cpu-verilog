@@ -23,14 +23,13 @@ module control_unit (
 		case(op)
 			6'b10_0011: begin // lw
 				regdst		<= 1'b0;
-				regwrite	<= 1'b0;
 				memread		<= 1'b1;
-				aluop[1:0]	<= 2'b00;
+              aluop[1:0]	<= 2'b00;
 				aluscr		<= 1'b1;
+              	memtoreg	<= 1'b1;
 			end
 			6'b10_1011: begin // sw
-				regwrite	<= 1'b0;
-				aluop[1:0]	<= 2'b00;
+              	aluop[1]	<= 1'b0;
 				aluscr		<= 1'b1;
 				memwrite 	<= 1'b1;
 				regwrite	<= 1'b0;
@@ -49,5 +48,4 @@ module control_unit (
 			end
 		endcase
 	end
-
 endmodule
