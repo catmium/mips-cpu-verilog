@@ -1,5 +1,5 @@
 
-module registerMemory(
+module registerMemory (
 	input[4:0]reg_read1,
 	input[4:0]reg_read2,
 	input[4:0]reg_write,
@@ -30,7 +30,7 @@ module registerMemory(
 	end
 
 	always @(*) begin
-		if (regwrite_con && reg_write != 0) 
+		if (regwrite_con && reg_write != 0)
 			// write a non $zero register
 			reg_mem[reg_write] <= write_data;
 		end

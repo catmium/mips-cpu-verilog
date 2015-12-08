@@ -1,4 +1,4 @@
-module dmem(dataOut, address, dataIn, readmode, writemode);
+module datamem(dataOut, address, dataIn, readmode, writemode);
     output reg [31:0] dataOut;
     input [31:0] address;
     input [31:0] dataIn;
