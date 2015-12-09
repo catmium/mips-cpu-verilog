@@ -1,8 +1,8 @@
-module mux32 (
+module mux32_2to1 (
 	output reg  [31:0] out,
 	input [31:0] in0,
 	input [31:0] in1,
-	input sel 
+	input sel
 	);
 
   	always @(sel)
