@@ -32,9 +32,10 @@ module cpu (
       output [31:0] j_addr,
       output [31:0] next_pc
 	  );
-    wire reg[31:0] pc;
+    wire [31:0] pc;
     initial begin
         addr = 32'd40;
+        //addr = addr << 2;
     end
 
     reg [31:0] ra;
@@ -50,18 +51,20 @@ module cpu (
     mux32_2to1 mux02 (mux2_out, reg_readdata2, signext_out, cu_aluscr);
     alu ALU (aluctrl_out, reg_readdata1, mux2_out, alu_out, alu_zero);
     datamem data_mem (clk, dmem_readdata, alu_out, reg_readdata2, cu_memread, cu_memwrite);
+
+    always @(posedge clk) addr <= pc;
+
     mux32_3to1 memmux(memdata, alu_out, dmem_readdata, pc, cu_memtoreg);
     and AND1(bBranch, cu_branch, alu_zero );
 
     wire [31:0] branch_shiftl2_result;
     wire [31:0] b_addr;
     wire [31:0] mux04_result;
+
     assign branch_shiftl2_result = signext_out << 2;
     assign b_addr = pc + branch_shiftl2_result;
-    assign j_addr = {pc[31:28],(instruction[25:0] << 2)};
+    assign j_addr = {pc[31:28],instruction[25:0] << 2};
 
     mux32_2to1 mux04 (mux04_result, pc, b_addr, bBranch);
     mux32_2to1 mux05 (next_pc, mux04_result, j_addr, cu_jump);
-    always @(posedge clk) addr <= pc;
-
 endmodule
