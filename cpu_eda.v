@@ -6,29 +6,23 @@ module alu(
 
 	wire [31:0] sub_ab;
 	wire [31:0] add_ab;
-	wire 		slt;
 
-	assign sub_ab = a - b;
-	assign add_ab = a + b;
+	//assign sub_ab = a - b;
+	//assign add_ab = a + b;
 
 	//assign slt = oflow_sub ? ~(a[31]) : a[31];
 
 	always @(*) begin
 		case (ctl)
-			4'b0000:  out <= a & b;				/* and */
-			4'b0001:  out <= a | b;				/* or */
-			4'b0010:  out <= add_ab;				/* add */
-			4'b0110:  out <= sub_ab;				/* sub */
-			4'b0111: begin
-              if (a < b) out = 32'b00000000000000000000000000000001;
-              else  out = 32'b00000000000000000000000000000000;
-            end	/* slt */
-
-			default: out <= 0;
+			4'b0000:  out = a & b;				/* and */
+			4'b0001:  out = a | b;				/* or */
+			4'b0010:  out = a + b;				/* add */
+			4'b0110:  out = a - b;				/* sub */
+            4'b0111:  out = (a < b) ? 32'b00000000000000000000000000000001 : 32'b0; //slt
+			default: out = 0;
 		endcase
 	end
   	assign zero = (0 == out)? 1 : out;
-
 endmodule
 
 
@@ -41,22 +35,19 @@ reg [3:0] ALUCon;
 
 	always @(*) begin
 		case(ALUOp)
-			2'b00: ALUCon <= 4'b0010;
-			2'b01: ALUCon <= 4'b0110;
-			2'b10: begin
-                      if(funct == 6'b100000)
-                        ALUCon <= 4'b0010;
-                      else if(funct == 6'b100010)
-                        ALUCon <= 4'b0110;
-                      else if(funct == 6'b100101)
-                        ALUCon <= 4'b0001;
-                      else if(funct == 6'b100100)
-                        ALUCon <= 4'b0000;
-                      else if(funct == 6'b101010)
-                        ALUCon <= 4'b0111;
-                      else
-                        ALUCon <= 4'b0000;
-                    end
+			2'b00: ALUCon <= 4'b0010;    // lw, sw
+			2'b01: ALUCon <= 4'b0110;    // beq
+            2'b10 :
+              begin
+                case (funct)
+                  6'b100000: ALUCon <= 4'b0010;
+                  6'b100010: ALUCon <= 4'b0110;
+                  6'b100101: ALUCon <= 4'b0001;
+                  6'b100100: ALUCon <= 4'b0000;
+                  6'b101010: ALUCon <= 4'b0111;
+                  default: 	 ALUCon <= 4'b0000;
+                endcase
+              end
 			default: ALUCon <= 4'b0000;
 		endcase
 	end
@@ -147,7 +138,7 @@ module instr_mem (	input [31:0] address,
 			for (i=0; i<250; i=i+1)
               memory[i] = 32'b0;
  				// Insert MIPS's assembly here start at memory[10] = ...
-          	memory[10] = 32'b001000_00000_01000_00000_00000_000101;    // addi $t0, $0, 5
+          memory[10] = 32'b000000_01000_01001_01010_00000_100000;    // addi $t0, $0, 5
 		end
 
 	assign instruction = memory[address >> 2];
@@ -155,18 +146,18 @@ module instr_mem (	input [31:0] address,
 endmodule
 
 
-module mux32(out, in0, in1, sel);
+module mux32(out, mem, alu, sel);
     output reg  [31:0] out;
-    input [31:0] in0;
-    input [31:0] in1;
+    input [31:0] mem;
+    input [31:0] alu;
 	input sel;    //select which inputs to send out
 
   	always @(sel)
     begin
       if (sel==0)
-            out = in0;
+            out = alu;
       else
-            out = in1;
+            out = mem;
     end
 endmodule
 
@@ -196,7 +187,13 @@ module registerMemory (
 	);
 
  	reg[31:0]reg_mem[31:0];
-
+  	integer i;
+  	initial
+      begin
+  for (i=0;i<32;i++) reg_mem[i] = 0;
+    reg_mem[reg_read1] = 32'b00_0000000000_0000000000_000000100;
+    reg_mem[reg_read2] = 32'b00_0000000000_0000000000_000000010;
+  end
  	always @(*) begin
 		if (reg_read1 == 0)
 				data1 = 0;
@@ -223,8 +220,8 @@ module registerMemory (
 endmodule
 
 module sign_extended (
-input signed [15:0] in,
-output signed [31:0] out);
+  output signed [31:0] out,
+input signed [15:0] in);
 
 assign out = in;
 
@@ -234,11 +231,25 @@ module cpu (
     //input clk, rst
   	input [31:0] addr,
   	//input [31:0] b_addr,
-    output reg [31:0] out
+  output reg [31:0] out,
+  output reg [31:0] instruction,
+  output reg cu_regdst, cu_jump, cu_branch, cu_memread, cu_memtoreg,
+  output reg[1:0] cu_aluop,
+  output reg cu_memwrite, cu_aluscr, cu_regwrite,
+  output reg[4:0] mux1_regwrite,
+  output reg[31:0] mux3_writedata,
+  output reg[31:0] reg_readdata1, reg_readdata2,
+  output reg[31:0] signext_out,
+  output reg[31:0] mux2_out,
+  output reg[31:0] alu_out,
+  output reg alu_zero,
+  output reg[3:0] aluctrl_out,
+  output reg[31:0] dmem_readdata,
+  output reg bBranch
     );
 
-    wire[31:0] instruction;
-    wire cu_regdst, cu_jump, cu_branch, cu_memread, cu_memtoreg;
+    //wire[31:0] instruction;
+    /*wire cu_regdst, cu_jump, cu_branch, cu_memread, cu_memtoreg;
     wire[1:0] cu_aluop;
     wire cu_memwrite, cu_aluscr, cu_regwrite;
   	wire[4:0] mux1_regwrite;
@@ -250,15 +261,16 @@ module cpu (
     wire alu_zero;
     wire[3:0] aluctrl_out;
     wire[31:0] dmem_readdata;
-  	reg bBranch;
+  	reg bBranch;*/
 
     instr_mem instrmem (addr,instruction );
 
-    control_unit contrlu (.op(instruction[31:26]),
-                          .regdst(cu_regdst), .regwrite(cu_regwrite), .branch(cu_branch),
-                          .jump(cu_jump), .memread(cu_memread), .memtoreg(cu_memtoreg),
-                          .memwrite(cu_memwrite), .aluop(cu_aluop), .aluscr(cu_aluscr)
-                          );
+  	///assign out = instruction;
+
+    control_unit contrlu (instruction[31:26],
+                          cu_regdst, cu_regwrite, cu_branch,
+                          cu_jump, cu_memread, cu_memtoreg,
+                          cu_memwrite, cu_aluop, cu_aluscr );
 
   	mux5 mux1 (mux1_regwrite, instruction[20:16], instruction[15:11], cu_regdst);
 
@@ -270,7 +282,7 @@ module cpu (
                           	.data2(reg_readdata2)
                           	);
 
-  	sign_extended signext (instruction[15:0], signext_out[31:0]);
+  	sign_extended signext (signext_out[31:0], instruction[15:0]);
 
     mux32 mux2 (mux2_out, reg_readdata2, signext_out, cu_aluscr);
 
@@ -286,12 +298,12 @@ module cpu (
 
     and AND1(bBranch, cu_branch, alu_zero );
 
-    /*always @(*) begin
+    always @(*) begin
 
   	if (bBranch == 1'b1)
-      out = instruction[31:0] + b_addr + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
+      out = instruction[31:0] + shiftl2_result + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
     else
       assign out = instruction[31:0] + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
-    end*/
+    end
 
-endmodule 
+endmodule
