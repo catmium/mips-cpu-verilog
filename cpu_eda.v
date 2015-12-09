@@ -252,7 +252,6 @@ module cpu (
     wire[31:0] dmem_readdata;
   	reg bBranch;
 
-
     instr_mem instrmem (addr,instruction );
 
     control_unit contrlu (.op(instruction[31:26]),

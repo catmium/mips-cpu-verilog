@@ -2,9 +2,9 @@
 // or browse Examples
 module tb_cpu;
   //input clk, rst;
-  //reg [31:0] addr;
+  reg [31:0] addr;
   //reg [31:0] b_addr;
-  //wire [31:0] out;
+  wire [31:0] out;
 
   	wire[31:0] instruction;
     wire cu_regdst, cu_jump, cu_branch, cu_memread, cu_memtoreg;
@@ -26,7 +26,7 @@ module tb_cpu;
 
       $display("RESULT");
       //$monitor("PC = %b  Next PC =%b ",instr,out);
-      addr = 32'b000000_00000_00000_00000_00000_101000;
+      #10 addr = 32'b000000_00000_00000_00000_00000_101000;
       $dumpfile("dump.vcd");
       $dumpvars(1);
     end
