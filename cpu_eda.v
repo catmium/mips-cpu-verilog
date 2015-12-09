@@ -146,18 +146,18 @@ module instr_mem (	input [31:0] address,
 endmodule
 
 
-module mux32(out, mem, alu, sel);
+module mux32(out, in0, in1, sel);
     output reg  [31:0] out;
-    input [31:0] mem;
-    input [31:0] alu;
+    input [31:0] in0;
+    input [31:0] in1;
 	input sel;    //select which inputs to send out
 
   	always @(sel)
     begin
       if (sel==0)
-            out = alu;
+            out = in0;
       else
-            out = mem;
+            out = in1;
     end
 endmodule
 
@@ -272,7 +272,7 @@ module cpu (
                           cu_jump, cu_memread, cu_memtoreg,
                           cu_memwrite, cu_aluop, cu_aluscr );
 
-  	mux5 mux1 (mux1_regwrite, instruction[20:16], instruction[15:11], cu_regdst);
+  	mux5 mux01 (mux1_regwrite, instruction[20:16], instruction[15:11], cu_regdst);
 
   	registerMemory regmem ( .reg_read1(instruction[25:21]), .reg_read2(instruction[20:16]),
                            .reg_write(mux1_regwrite[4:0]),
@@ -284,7 +284,7 @@ module cpu (
 
   	sign_extended signext (signext_out[31:0], instruction[15:0]);
 
-    mux32 mux2 (mux2_out, reg_readdata2, signext_out, cu_aluscr);
+  	mux32 mux02 (mux2_out, reg_readdata2, signext_out, cu_aluscr);
 
     alu_control aluctrl (cu_aluop, instruction[5:0], aluctrl_out);
 
@@ -292,18 +292,22 @@ module cpu (
 
     datamem data_mem (dmem_readdata, alu_out, reg_readdata2, cu_memread, cu_memwrite);
 
-  	mux32 mux3(mux3_writedata, dmem_readdata, alu_out, cu_memtoreg);
-
-    reg[31:0] shiftl2_result = signext_out << 2;
+  	mux32 mux03(mux3_writedata, alu_out, dmem_readdata, cu_memtoreg);
 
     and AND1(bBranch, cu_branch, alu_zero );
 
-    always @(*) begin
+  	reg[31:0] branch_shiftl2_result = signext_out << 2;
 
-  	if (bBranch == 1'b1)
-      out = instruction[31:0] + shiftl2_result + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
-    else
-      assign out = instruction[31:0] + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
-    end
+  	reg[31:0] pcp4 = addr + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
+  	reg[31:0] j_addr = {pcp4[31:28],(instruction[25:0] << 2)};
+
+  	reg[31:0] b_addr = instruction[31:0] + branch_shiftl2_result + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
+
+  	reg[31:0] mux04_result;
+
+  	mux32 mux04 (mux04_result, pcp4, b_addr, bBranch);
+  	mux32 mux05 (mux05_result, mux04_result, j_addr, bBranch);
+
+    out = mux05_result;
 
 endmodule
