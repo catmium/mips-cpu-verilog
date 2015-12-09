@@ -2,15 +2,10 @@ module alu(
 		input		[3:0]	ctl,
 		input		[31:0]	a, b,
 		output reg	[31:0]	out,
-		output				zero);
+		output				zero );
 
 	wire [31:0] sub_ab;
 	wire [31:0] add_ab;
-
-	//assign sub_ab = a - b;
-	//assign add_ab = a + b;
-
-	//assign slt = oflow_sub ? ~(a[31]) : a[31];
 
 	always @(*) begin
 		case (ctl)
@@ -18,20 +13,20 @@ module alu(
 			4'b0001:  out = a | b;				/* or */
 			4'b0010:  out = a + b;				/* add */
 			4'b0110:  out = a - b;				/* sub */
-            4'b0111:  out = (a < b) ? 32'b00000000000000000000000000000001 : 32'b0; //slt
+	        4'b0111:  out = (a < b) ? 32'b00000000000000000000000000000001 : 32'b0; //slt
 			default: out = 0;
 		endcase
 	end
-  	assign zero = (0 == out)? 1 : out;
+	assign zero = (0 == out)? 1 : out;
 endmodule
 
 
 module alu_control(ALUOp,funct,ALUCon);
- input [1:0] ALUOp;
- input [5:0] funct;
- output [3:0] ALUCon;
+	input [1:0] ALUOp;
+	input [5:0] funct;
+	output [3:0] ALUCon;
 
-reg [3:0] ALUCon;
+	reg [3:0] ALUCon;
 
 	always @(*) begin
 		case(ALUOp)
@@ -100,6 +95,7 @@ module control_unit (
 				aluop[1] 	<= 1'b0;
 				aluscr   	<= 1'b1;
 			end
+          	6'b00_0010:jump	<= 1'b1;
 			6'b00_0000: begin // add
 			end
 		endcase
@@ -116,7 +112,6 @@ module datamem(dataOut, address, dataIn, readmode, writemode);
 
     reg [31:0] dMemory [511:0];
 
-    //do when read or write signal is recieved
     always@ (readmode or writemode)
     begin
         if (writemode == 1)
@@ -138,41 +133,80 @@ module instr_mem (	input [31:0] address,
 			for (i=0; i<250; i=i+1)
               memory[i] = 32'b0;
  				// Insert MIPS's assembly here start at memory[10] = ...
-          memory[10] = 32'b000000_01000_01001_01010_00000_100000;    // addi $t0, $0, 5
+          memory[10] = 32'b000000_01000_01001_01010_00000_100000;    // add $t2, $t0, $1
+          memory[11] = 32'b000100_01000_01000_0000000000000100;		 // beq $t0, $t0,
+          memory[12] = 32'b000010_00000000000000000000101000;
 		end
 
 	assign instruction = memory[address >> 2];
 
 endmodule
 
-
-module mux32(out, in0, in1, sel);
+module mux32_2to1(out, in0, in1, sel);
     output reg  [31:0] out;
     input [31:0] in0;
     input [31:0] in1;
-	input sel;    //select which inputs to send out
+	input sel;
 
   	always @(sel)
     begin
-      if (sel==0)
-            out = in0;
-      else
-            out = in1;
+		case (sel)
+			1'b0: out = in0;
+			1'b1: out = in1;
+		endcase
     end
 endmodule
 
-module mux5(out, in0, in1, sel);
-  output reg  [4:0] out;
-  input [4:0] in0;
-  input [4:0] in1;
-	input sel;    //select which inputs to send out
+module mux32_4to1 (out, in0, in1, in2, in3, sel);
+	output reg  [4:0] out;
+	input [31:0] in0;
+	input [31:0] in1;
+	input [31:0] in2;
+	input [31:0] in3;
+	input [3:0] sel;
 
   	always @(sel)
     begin
-      if (sel==0)
-            out = in0;
-      else
-            out = in1;
+		case (sel)
+			2'b00: out = in0;
+			2'b01: out = in1;
+			2'b10: out = in2;
+			2'b11: out = in3;
+		endcase
+    end
+endmodule
+
+module mux5_2to1(out, in0, in1, sel);
+	output reg  [4:0] out;
+	input [4:0] in0;
+	input [4:0] in1;
+	input sel;
+
+  	always @(sel)
+    begin
+		case (sel)
+			1'b0: out = in0;
+			1'b1: out = in1;
+		endcase
+    end
+endmodule
+
+module mux5_4to1 (out, in0, in1, in2, in3, sel);
+	output reg  [4:0] out;
+	input [4:0] in0;
+	input [4:0] in1;
+	input [4:0] in2;
+	input [4:0] in3;
+	input [3:0] sel;
+
+  	always @(sel)
+    begin
+		case (sel)
+			2'b00: out = in0;
+			2'b01: out = in1;
+			2'b10: out = in2;
+			2'b11: out = in3;
+		endcase
     end
 endmodule
 
@@ -228,86 +262,72 @@ assign out = in;
 endmodule
 
 module cpu (
-    //input clk, rst
-  	input [31:0] addr,
-  	//input [31:0] b_addr,
-  output reg [31:0] out,
-  output reg [31:0] instruction,
-  output reg cu_regdst, cu_jump, cu_branch, cu_memread, cu_memtoreg,
-  output reg[1:0] cu_aluop,
-  output reg cu_memwrite, cu_aluscr, cu_regwrite,
-  output reg[4:0] mux1_regwrite,
-  output reg[31:0] mux3_writedata,
-  output reg[31:0] reg_readdata1, reg_readdata2,
-  output reg[31:0] signext_out,
-  output reg[31:0] mux2_out,
-  output reg[31:0] alu_out,
-  output reg alu_zero,
-  output reg[3:0] aluctrl_out,
-  output reg[31:0] dmem_readdata,
-  output reg bBranch
-    );
+  	  input [31:0] addr,
+	  output reg [31:0] out,
+	  output reg [31:0] instruction,
+	  output reg [1:0] cu_regdst,
+	  output reg cu_jump, cu_branch, cu_memread,
+	  output reg [1:0] cu_memtoreg,
+	  output reg [1:0] cu_aluop,
+	  output reg cu_memwrite, cu_aluscr, cu_regwrite,
+	  output reg [4:0] mux1_regwrite,
+	  output reg [31:0] mux3_writedata,
+	  output reg [31:0] reg_readdata1, reg_readdata2,
+	  output reg [31:0] signext_out,
+	  output reg [31:0] mux2_out,
+	  output reg [31:0] alu_out,
+	  output reg alu_zero,
+	  output reg [3:0] aluctrl_out,
+	  output reg [31:0] dmem_readdata,
+	  output reg bBranch
+	  );
 
-    //wire[31:0] instruction;
-    /*wire cu_regdst, cu_jump, cu_branch, cu_memread, cu_memtoreg;
-    wire[1:0] cu_aluop;
-    wire cu_memwrite, cu_aluscr, cu_regwrite;
-  	wire[4:0] mux1_regwrite;
-    wire[31:0] mux3_writedata;
-    wire[31:0] reg_readdata1, reg_readdata2;
-    wire[31:0] signext_out;
-    wire[31:0] mux2_out;
-    wire[31:0] alu_out;
-    wire alu_zero;
-    wire[3:0] aluctrl_out;
-    wire[31:0] dmem_readdata;
-  	reg bBranch;*/
+	    instr_mem instrmem (addr,instruction);
 
-    instr_mem instrmem (addr,instruction );
+	    control_unit contrlu (instruction[31:26],
+	                          cu_regdst, cu_regwrite, cu_branch,
+	                          cu_jump, cu_memread, cu_memtoreg,
+	                          cu_memwrite, cu_aluop, cu_aluscr );
 
-  	///assign out = instruction;
+	  	mux5_2to1 mux01 (mux1_regwrite, instruction[20:16], instruction[15:11], cu_regdst);
 
-    control_unit contrlu (instruction[31:26],
-                          cu_regdst, cu_regwrite, cu_branch,
-                          cu_jump, cu_memread, cu_memtoreg,
-                          cu_memwrite, cu_aluop, cu_aluscr );
+	  	registerMemory regmem ( .reg_read1(instruction[25:21]),
+								.reg_read2(instruction[20:16]),
+	                           	.reg_write(mux1_regwrite[4:0]),
+	                          	.regwrite_con(cu_regwrite),
+	                          	.write_data(mux3_writedata),
+	                          	.data1(reg_readdata1),
+	                          	.data2(reg_readdata2)
+	                          	);
 
-  	mux5 mux01 (mux1_regwrite, instruction[20:16], instruction[15:11], cu_regdst);
+	  	sign_extended signext (signext_out[31:0], instruction[15:0]);
 
-  	registerMemory regmem ( .reg_read1(instruction[25:21]), .reg_read2(instruction[20:16]),
-                           .reg_write(mux1_regwrite[4:0]),
-                          	.regwrite_con(cu_regwrite),
-                          	.write_data(mux3_writedata),
-                          	.data1(reg_readdata1),
-                          	.data2(reg_readdata2)
-                          	);
+	  	mux32_2to1 mux02 (mux2_out, reg_readdata2, signext_out, cu_aluscr);
 
-  	sign_extended signext (signext_out[31:0], instruction[15:0]);
+	    alu_control aluctrl (cu_aluop, instruction[5:0], aluctrl_out);
 
-  	mux32 mux02 (mux2_out, reg_readdata2, signext_out, cu_aluscr);
+	    alu ALU (aluctrl_out, reg_readdata1, mux2_out, alu_out, alu_zero);
 
-    alu_control aluctrl (cu_aluop, instruction[5:0], aluctrl_out);
+	    datamem data_mem (dmem_readdata, alu_out, reg_readdata2, cu_memread, cu_memwrite);
 
-    alu ALU (aluctrl_out, reg_readdata1, mux2_out, alu_out, alu_zero);
+	  	mux32_2to1 mux03(mux3_writedata, alu_out, dmem_readdata, cu_memtoreg);
 
-    datamem data_mem (dmem_readdata, alu_out, reg_readdata2, cu_memread, cu_memwrite);
+	    and AND1(bBranch, cu_branch, alu_zero );
 
-  	mux32 mux03(mux3_writedata, alu_out, dmem_readdata, cu_memtoreg);
+	  	reg[31:0] branch_shiftl2_result;
+	  	assign branch_shiftl2_result = signext_out << 2;
 
-    and AND1(bBranch, cu_branch, alu_zero );
+	  	reg[31:0] pcp4;
+	  	assign pcp4 = addr + 4;
+	  	reg[31:0] j_addr;
+	  	assign j_addr = {pcp4[31:28],(instruction[25:0] << 2)};
 
-  	reg[31:0] branch_shiftl2_result = signext_out << 2;
+	  reg[31:0] b_addr;
+	  assign b_addr = pcp4 + branch_shiftl2_result;
+	  reg[31:0] mux04_result;
 
-  	reg[31:0] pcp4 = addr + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
-  	reg[31:0] j_addr = {pcp4[31:28],(instruction[25:0] << 2)};
+	  mux32_2to1 mux04 (mux04_result, pcp4, b_addr, bBranch);
+	  mux32_2to1 mux05 (mux05_result, mux04_result, j_addr, cu_jump);
 
-  	reg[31:0] b_addr = instruction[31:0] + branch_shiftl2_result + 32'b0000_0000_0000_0000_0000_0000_0000_0100;
-
-  	reg[31:0] mux04_result;
-
-  	mux32 mux04 (mux04_result, pcp4, b_addr, bBranch);
-  	mux32 mux05 (mux05_result, mux04_result, j_addr, bBranch);
-
-    out = mux05_result;
-
+	  assign out = mux04_result; //next address output
 endmodule

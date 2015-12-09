@@ -21,5 +21,5 @@ reg [3:0] ALUCon;
 			//default: ALUCon <= 4'b0000;
 		endcase
 	end
-
+    
 endmodule
