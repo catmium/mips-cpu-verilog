@@ -1,0 +1,107 @@
+$date
+	Thu Dec 10 03:28:56 2015
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1s
+$end
+$scope module tb_cpu $end
+$var wire 32 ! signext_out [31:0] $end
+$var wire 32 " reg_readdata2 [31:0] $end
+$var wire 32 # reg_readdata1 [31:0] $end
+$var wire 32 $ pcp4 [31:0] $end
+$var wire 32 % mux3_writedata [31:0] $end
+$var wire 32 & mux2_out [31:0] $end
+$var wire 5 ' mux1_regwrite [4:0] $end
+$var wire 32 ( j_addr [31:0] $end
+$var wire 32 ) instruction [31:0] $end
+$var wire 32 * dmem_readdata [31:0] $end
+$var wire 1 + cu_regwrite $end
+$var wire 2 , cu_regdst [1:0] $end
+$var wire 1 - cu_memwrite $end
+$var wire 2 . cu_memtoreg [1:0] $end
+$var wire 1 / cu_memread $end
+$var wire 1 0 cu_jump $end
+$var wire 1 1 cu_branch $end
+$var wire 1 2 cu_aluscr $end
+$var wire 2 3 cu_aluop [1:0] $end
+$var wire 1 4 bBranch $end
+$var wire 4 5 aluctrl_out [3:0] $end
+$var wire 1 6 alu_zero $end
+$var wire 32 7 alu_out [31:0] $end
+$var wire 32 8 addr [31:0] $end
+$var reg 1 9 clk $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+09
+b101000 8
+b101 7
+16
+b10 5
+04
+b0 3
+12
+01
+00
+0/
+b0 .
+0-
+b0 ,
+1+
+bx *
+b100000000010000000000000000101 )
+b0xxxx00001000000000000000010100 (
+b1000 '
+b101 &
+b0 %
+bx $
+b0 #
+b0 "
+b101 !
+$end
+#5
+b1000000000000000010100 (
+b101100 $
+19
+#10
+09
+#15
+19
+#20
+09
+#25
+19
+#30
+09
+#35
+19
+#40
+09
+#45
+19
+#50
+09
+#55
+19
+#60
+09
+#65
+19
+#70
+09
+#75
+19
+#80
+09
+#85
+19
+#90
+09
+#95
+19
+#100
+09

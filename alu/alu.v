@@ -2,29 +2,20 @@ module alu(
 		input		[3:0]	ctl,
 		input		[31:0]	a, b,
 		output reg	[31:0]	out,
-		output				zero);
+		output				zero );
 
 	wire [31:0] sub_ab;
 	wire [31:0] add_ab;
-	wire 		slt;
-
-	assign zero = (0 == out);
-
-	assign sub_ab = a - b;
-	assign add_ab = a + b;
-
-	assign slt = oflow_sub ? ~(a[31]) : a[31];
 
 	always @(*) begin
 		case (ctl)
-			4'd0000:  out <= a & b;				/* and */
-			4'd0001:  out <= a | b;				/* or */
-			4'd0010:  out <= add_ab;				/* add */
-			4'd0110:  out <= sub_ab;				/* sub */
-			4'd0111:  out <= {{31{1'b0}}, slt};	/* slt */
-
-			default: out <= 0;
+			4'b0000:  out = a & b;				/* and */
+			4'b0001:  out = a | b;				/* or */
+			4'b0010:  out = a + b;				/* add */
+			4'b0110:  out = a - b;				/* sub */
+	        4'b0111:  out = (a < b) ? 32'b00000000000000000000000000000001 : 32'b0; //slt
+			default: out = 0;
 		endcase
 	end
-
+	assign zero = (0 == out)? 1 : out;
 endmodule

@@ -5,7 +5,7 @@ module datamem(dataOut, address, dataIn, readmode, writemode);
     input readmode;
     input writemode;
 
-    reg [31:0] dMemory [511:0];
+    reg [31:0] dMemory [2499:250];
 
     //do when read or write signal is recieved
     always@ (readmode or writemode)
