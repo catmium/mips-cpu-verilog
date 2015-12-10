@@ -45,7 +45,7 @@ module cpu (
     assign pc = addr + 4;
     control_unit contrlu (instruction[31:26], cu_regdst, cu_regwrite, cu_branch, cu_jump, cu_memread, cu_memtoreg, cu_memwrite, cu_aluop, cu_aluscr);
     mux5_3to1 mux01 (mux1_regwrite, instruction[20:16], instruction[15:11], ra_addr, cu_regdst[1:0]);
-    regmem rmem (instruction[25:21], instruction[20:16], mux1_regwrite[4:0], cu_regwrite, memdata, reg_readdata1, reg_readdata2);
+    regmem rmem (instruction[25:21], instruction[20:16], mux1_regwrite, cu_regwrite, memdata, reg_readdata1, reg_readdata2);
     alu_control aluctrl (cu_aluop, instruction[5:0], aluctrl_out);
     sign_extended signext (signext_out[31:0], instruction[15:0]);
     mux32_2to1 mux02 (mux2_out, reg_readdata2, signext_out, cu_aluscr);
@@ -67,4 +67,6 @@ module cpu (
 
     mux32_2to1 mux04 (mux04_result, pc, b_addr, bBranch);
     mux32_2to1 mux05 (next_pc, mux04_result, j_addr, cu_jump);
+
+
 endmodule
